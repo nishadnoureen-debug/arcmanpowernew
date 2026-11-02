@@ -167,3 +167,80 @@ if (form) {
 }
 
 document.getElementById("year").textContent = new Date().getFullYear();
+
+// Motion pass: word reveals, photo wipes, parallax, card tilt, scroll progress
+if (!reduceMQ.matches) {
+  // Headings rise in word by word
+  const splitWords = (el) => {
+    let i = 0;
+    const walk = (node) => {
+      [...node.childNodes].forEach((n) => {
+        if (n.nodeType === 1) return walk(n);
+        if (n.nodeType !== 3 || !n.textContent.trim()) return;
+        const frag = document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach((part) => {
+          if (!part) return;
+          if (/^\s+$/.test(part)) return frag.append(part);
+          const w = document.createElement("span");
+          w.className = "w";
+          w.innerHTML = "<span></span>";
+          w.firstChild.textContent = part;
+          w.firstChild.style.setProperty("--wi", i++);
+          frag.append(w);
+        });
+        n.replaceWith(frag);
+      });
+    };
+    el.setAttribute("aria-label", el.textContent.replace(/\s+/g, " ").trim());
+    walk(el);
+    el.classList.add("wsplit");
+  };
+  document.querySelectorAll("h1, h2").forEach((h) => { splitWords(h); entrance.observe(h); });
+
+  // Photos wipe up into view
+  document.querySelectorAll(".card-img, .sd-panel, .ind-img, .hero-photo").forEach((el) => {
+    el.classList.add("wipe");
+    entrance.observe(el);
+  });
+
+  // Parallax on banner and hero photos, only while on screen
+  const parImgs = [...document.querySelectorAll(".page-hero-bg img, .hero-photo img")];
+  parImgs.forEach((img) => img.setAttribute("data-par", ""));
+  const visible = new Set();
+  const parObs = new IntersectionObserver((es) => es.forEach((e) => (e.isIntersecting ? visible.add(e.target) : visible.delete(e.target))));
+  parImgs.forEach((img) => parObs.observe(img));
+
+  const bar = document.createElement("div");
+  bar.className = "progress";
+  bar.setAttribute("aria-hidden", "true");
+  document.body.append(bar);
+
+  let ticking = false;
+  const frame = () => {
+    ticking = false;
+    const max = document.documentElement.scrollHeight - innerHeight;
+    bar.style.setProperty("--p", max > 0 ? (scrollY / max).toFixed(4) : 0);
+    visible.forEach((img) => {
+      const r = img.parentElement.getBoundingClientRect();
+      const offset = (r.top + r.height / 2 - innerHeight / 2) * -0.12;
+      img.style.setProperty("--py", offset.toFixed(1) + "px");
+    });
+  };
+  const request = () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } };
+  addEventListener("scroll", request, { passive: true });
+  addEventListener("resize", request);
+  request();
+
+  // Cards tilt toward the pointer
+  if (matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    document.querySelectorAll(".card, .ind-card").forEach((card) => {
+      card.addEventListener("pointermove", (e) => {
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+        card.style.setProperty("--rx", (-y * 6).toFixed(2) + "deg");
+        card.style.setProperty("--ry", (x * 8).toFixed(2) + "deg");
+      });
+      card.addEventListener("pointerleave", () => { card.style.removeProperty("--rx"); card.style.removeProperty("--ry"); });
+    });
+  }
+}
