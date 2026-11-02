@@ -325,6 +325,7 @@ p { margin: 0 0 1em; }
 .c-card svg { width: 26px; height: 26px; color: var(--primary); margin-bottom: 14px; }
 .c-card h3 { font-size: 1rem; margin-bottom: 4px; }
 .c-card p, .c-card a { color: var(--muted); font-size: .98rem; margin: 0; }
+.c-card a { display: block; }
 .c-card a:hover { color: var(--primary); }
 .quote-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: clamp(36px, 5vw, 70px); align-items: start; }
 .map { margin-top: 30px; border-radius: var(--radius); overflow: hidden; aspect-ratio: 16 / 11; border: 1px solid var(--line); background: var(--navy); }

@@ -161,8 +161,7 @@ if (form) {
       "",
       d.get("message"),
     ].join("\n");
-    // TODO: replace with the real company email
-    location.href = `mailto:info@arcmanpower.ae?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    location.href = `mailto:hr@arcmanpower.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     document.getElementById("formOk").hidden = false;
   });
 }
