@@ -197,18 +197,31 @@ if (!reduceMQ.matches) {
   };
   document.querySelectorAll("h1, h2").forEach((h) => { splitWords(h); entrance.observe(h); });
 
-  // Photos wipe up into view
+  // Photos wipe up into view. A fully clipped photo never counts as on screen,
+  // so its unclipped parent is what gets watched.
+  const wipeObs = new IntersectionObserver(
+    (es) => es.forEach((e) => {
+      if (!e.isIntersecting) return;
+      e.target.querySelectorAll(":scope > .wipe").forEach((w) => w.classList.add("in"));
+      wipeObs.unobserve(e.target);
+    }),
+    { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
+  );
   document.querySelectorAll(".card-img, .sd-panel, .ind-img, .hero-photo").forEach((el) => {
     el.classList.add("wipe");
-    entrance.observe(el);
+    wipeObs.observe(el.parentElement);
   });
 
-  // Parallax on banner and hero photos, only while on screen
+  // Parallax on banner and hero photos, only while their (unclipped) holder is on screen
   const parImgs = [...document.querySelectorAll(".page-hero-bg img, .hero-photo img")];
+  const holderImg = new Map(parImgs.map((img) => [img.closest(".page-hero-bg, .hero-art"), img]));
   parImgs.forEach((img) => img.setAttribute("data-par", ""));
   const visible = new Set();
-  const parObs = new IntersectionObserver((es) => es.forEach((e) => (e.isIntersecting ? visible.add(e.target) : visible.delete(e.target))));
-  parImgs.forEach((img) => parObs.observe(img));
+  const parObs = new IntersectionObserver((es) => es.forEach((e) => {
+    const img = holderImg.get(e.target);
+    e.isIntersecting ? visible.add(img) : visible.delete(img);
+  }));
+  holderImg.forEach((_, holder) => parObs.observe(holder));
 
   const bar = document.createElement("div");
   bar.className = "progress";
